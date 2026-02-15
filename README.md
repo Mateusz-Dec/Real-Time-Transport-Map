@@ -25,3 +25,7 @@ Aplikacja webowa stworzona w React, służąca do wizualizacji transportu public
 
 1.  `npm install`
 2.  `npm run dev`
+
+## 🚀 Demo
+
+**Live Demo**: https://real-time-transport-map.vercel.app/
