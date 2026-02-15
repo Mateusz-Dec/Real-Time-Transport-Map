@@ -1,5 +1,6 @@
 import React, { useMemo } from "react";
-import { CircleMarker, Tooltip, Popup } from "react-leaflet";
+import { Marker, Tooltip, Popup } from "react-leaflet";
+import L from "leaflet";
 
 const StopMarker = ({ stop }) => {
   const schedule = useMemo(() => {
@@ -12,17 +13,24 @@ const StopMarker = ({ stop }) => {
       .sort((a, b) => a.time - b.time);
   }, []);
 
+  const icon = L.divIcon({
+    className: "stop-marker-container",
+    html: `
+      <div class="stop-marker-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M19 17h2l.64-2.54c.24-.959.24-1.962.24-1.962H2.12s0 1 .24 1.962L3 17h2"></path>
+          <path d="M16 17h-8"></path>
+          <path d="M4 17v3h2v-3"></path>
+          <path d="M18 17v3h2v-3"></path>
+          <path d="M17 11H7V8a5 5 0 0 1 10 0v3z"></path>
+        </svg>
+      </div>`,
+    iconSize: [20, 20],
+    iconAnchor: [10, 10],
+  });
+
   return (
-    <CircleMarker
-      center={stop.position}
-      radius={8}
-      pathOptions={{
-        color: "#555",
-        fillColor: "white",
-        fillOpacity: 1,
-        weight: 2,
-      }}
-    >
+    <Marker position={stop.position} icon={icon}>
       <Tooltip direction="top" offset={[0, -5]} opacity={1}>
         {stop.name}
       </Tooltip>
@@ -39,7 +47,7 @@ const StopMarker = ({ stop }) => {
           </ul>
         </div>
       </Popup>
-    </CircleMarker>
+    </Marker>
   );
 };
 

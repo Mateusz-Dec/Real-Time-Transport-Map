@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 
-// Baza współrzędnych przystanków (wspólna dla tras i markerów)
 const stopsData = {
   "Bronowice Małe": [50.085, 19.89],
   "Teatr Bagatela": [50.064, 19.936],
@@ -145,20 +144,18 @@ const useVehicles = () => {
           if (!route || route.length < 2) return vehicle;
 
           let { routeIndex, progress } = vehicle;
-          const speed = 0.005; // Prędkość poruszania się
+          const speed = 0.005;
 
           progress += speed;
 
-          // Przejście do kolejnego segmentu trasy
           if (progress >= 1) {
             progress = 0;
             routeIndex++;
             if (routeIndex >= route.length - 1) {
-              routeIndex = 0; // Pętla (autobus wraca na start)
+              routeIndex = 0;
             }
           }
 
-          // Interpolacja liniowa między punktami trasy
           const p1 = route[routeIndex];
           const p2 = route[routeIndex + 1];
           const lat = p1[0] + (p2[0] - p1[0]) * progress;
@@ -172,7 +169,7 @@ const useVehicles = () => {
           };
         }),
       );
-    }, 50); // Częsta aktualizacja dla płynnej animacji (50ms = 20fps)
+    }, 50);
 
     return () => clearInterval(interval);
   }, []);

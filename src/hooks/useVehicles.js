@@ -88,6 +88,7 @@ const initialVehicles = [
     destination: "Borek Fałęcki",
     delay: 0,
     routeIndex: 1, // Startuje w Tunelu
+    lowFloor: true,
     progress: 0.5,
     nextStops: ["Rondo Mogilskie", "Klimeckiego"],
   },
@@ -98,6 +99,7 @@ const initialVehicles = [
     destination: "Rżąka",
     delay: 5,
     routeIndex: 3, // Startuje przy Jubilacie
+    lowFloor: true,
     progress: 0.2,
     nextStops: ["Jubilat", "Rondo Grunwaldzkie", "Mateczny"],
   },
@@ -108,6 +110,7 @@ const initialVehicles = [
     destination: "Borek Fałęcki",
     delay: 1,
     routeIndex: 3,
+    lowFloor: false,
     progress: 0.8,
     nextStops: ["Korona (12:10)", "Smolki (12:12)", "Rzemieślnicza (12:14)"],
   },
@@ -118,6 +121,7 @@ const initialVehicles = [
     destination: "Nowy Bieżanów",
     delay: 8,
     routeIndex: 1, // Startuje przy AGH
+    lowFloor: true,
     progress: 0.4,
     nextStops: ["AGH / UR", "Muzeum Narodowe", "Jubilat"],
   },
@@ -131,7 +135,18 @@ const useVehicles = () => {
       // Pozycja startowa: jeśli trasa istnieje, bierzemy punkt startowy, w przeciwnym razie domyślny
       const pos =
         route && route[v.routeIndex] ? route[v.routeIndex] : [50.06, 19.94];
-      return { ...v, position: pos };
+
+      // Obliczamy początkowy kąt (bearing), żeby strzałka nie była ustawiona na 0 (północ)
+      let bearing = 0;
+      if (route && route[v.routeIndex + 1]) {
+        const p1 = route[v.routeIndex];
+        const p2 = route[v.routeIndex + 1];
+        const dy = p2[0] - p1[0];
+        const dx = p2[1] - p1[1];
+        bearing = Math.atan2(dx, dy) * (180 / Math.PI);
+      }
+
+      return { ...v, position: pos, bearing };
     }),
   );
 
@@ -162,11 +177,17 @@ const useVehicles = () => {
           const lat = p1[0] + (p2[0] - p1[0]) * progress;
           const lng = p1[1] + (p2[1] - p1[1]) * progress;
 
+          // Obliczanie kąta obrotu (bearing)
+          const dy = p2[0] - p1[0];
+          const dx = p2[1] - p1[1];
+          const bearing = Math.atan2(dx, dy) * (180 / Math.PI);
+
           return {
             ...vehicle,
             routeIndex,
             progress,
             position: [lat, lng],
+            bearing: bearing,
           };
         }),
       );

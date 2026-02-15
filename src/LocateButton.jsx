@@ -1,7 +1,7 @@
 import React from "react";
 import { useMap } from "react-leaflet";
 
-const LocateButton = () => {
+const LocateButton = ({ darkMode }) => {
   const map = useMap();
 
   const handleLocate = () => {
@@ -11,7 +11,10 @@ const LocateButton = () => {
   };
 
   return (
-    <button className="locate-button" onClick={handleLocate}>
+    <button
+      className={`locate-button ${darkMode ? "dark-mode" : ""}`}
+      onClick={handleLocate}
+    >
       📍 Moja lokalizacja
     </button>
   );

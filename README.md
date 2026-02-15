@@ -4,22 +4,29 @@ Aplikacja webowa stworzona w React, służąca do wizualizacji transportu public
 
 ## Funkcjonalności
 
-- **Mapa na żywo**: Wyświetla aktualne pozycje tramwajów i autobusów na mapie Krakowa.
-- **Śledzenie pojazdów**: Płynna animacja ruchu pojazdów wzdłuż zdefiniowanych tras.
-- **Filtrowanie**: Możliwość filtrowania widocznych pojazdów (wszystkie, autobusy, tramwaje).
-- **Wyszukiwanie**: Wyszukiwarka linii z podpowiedziami.
-- **Szczegóły pojazdu**: Po kliknięciu w pojazd wyświetla się dymek z informacjami o linii, kierunku i opóźnieniu.
-- **Przystanki**: Wyświetlanie przystanków na mapie. Po kliknięciu w przystanek mapa centruje się na nim, a dymek pokazuje najbliższe odjazdy.
-- **Trasy**: Po wybraniu linii na mapie rysowana jest jej trasa.
-- **Lokalizacja**: Przycisk do namierzania lokalizacji użytkownika.
-- **Tryb ciemny**: Przełącznik motywu jasnego/ciemnego dla mapy i interfejsu.
-- **Responsywność**: Panel boczny można zwijać, aby odsłonić więcej mapy.
+- **Mapa na żywo**: Wyświetla pozycje pojazdów na mapie Krakowa.
+- **Płynny ruch**: Animacja ruchu pojazdów wzdłuż zdefiniowanych tras.
+- **Planer podróży**: Wyznaczanie bezpośrednich połączeń między przystankami.
+- **Filtrowanie i wyszukiwanie**: Zaawansowane opcje filtrowania (typ pojazdu, niskopodłogowość) oraz inteligentna wyszukiwarka linii i przystanków.
+- **Ulubione**: Możliwość dodawania linii do ulubionych.
+- **Szczegóły**: Dymki z informacjami o pojazdach (opóźnienie, dostępność) i przystankach (rozkład jazdy).
+- **Warstwy mapy**: Przełącznik widoku mapy (jasna, ciemna, satelitarna, terenowa) oraz warstwa torów kolejowych.
+- **Interaktywność**:
+  - Wyświetlanie trasy po kliknięciu w pojazd lub wybraniu linii.
+  - Centrowanie mapy na wybranym przystanku.
+  - Przycisk "Moja lokalizacja" i "Resetuj widok".
+- **UI/UX**:
+  - Tryb ciemny dla całej aplikacji.
+  - Klastrowanie przystanków dla lepszej czytelności.
+  - Zwijany panel boczny i responsywny design dla urządzeń mobilnych.
 
 ## Technologie
 
 - React
 - Leaflet / React-Leaflet (mapy)
 - Vite (narzędzie budujące)
+- React-Leaflet-Cluster (grupowanie znaczników)
+- leaflet.markercluster
 
 ## Uruchomienie
 

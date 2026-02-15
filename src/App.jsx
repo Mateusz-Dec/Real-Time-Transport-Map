@@ -1,7 +1,10 @@
 import { useState, useEffect } from "react";
 import "./App.css";
+import "leaflet/dist/leaflet.css";
+import "react-leaflet-markercluster/styles";
 import {
   MapContainer,
+  LayersControl,
   TileLayer,
   Polyline,
   useMapEvents,
@@ -9,6 +12,7 @@ import {
   CircleMarker,
 } from "react-leaflet";
 import useVehicles from "./hooks/useVehicles";
+import MarkerClusterGroup from "react-leaflet-cluster";
 import VehicleMarker from "./VehicleMarker";
 import StopMarker from "./hooks/StopMarker";
 import FilterPanel from "./hooks/FilterPanel";
@@ -62,6 +66,21 @@ const StopHighlight = ({ selectedStop }) => {
   );
 };
 
+const ResetViewButton = ({ center, zoom, onReset, darkMode }) => {
+  const map = useMap();
+  return (
+    <button
+      className={`reset-view-button ${darkMode ? "dark-mode" : ""}`}
+      onClick={() => {
+        map.setView(center, zoom);
+        if (onReset) onReset();
+      }}
+    >
+      ↺ Reset
+    </button>
+  );
+};
+
 function App() {
   const position = [50.0614, 19.9366];
   const { vehicles, routes, stops } = useVehicles();
@@ -71,43 +90,64 @@ function App() {
   const [selectedLine, setSelectedLine] = useState(null);
   const [selectedStop, setSelectedStop] = useState(null);
   const [arrivedStop, setArrivedStop] = useState(null);
+  const [routeStart, setRouteStart] = useState(null);
+  const [routeEnd, setRouteEnd] = useState(null);
+  const [plannedRoute, setPlannedRoute] = useState(null);
+  const [onlyLowFloor, setOnlyLowFloor] = useState(false);
 
   const handleSelectLine = (line) => {
     setSelectedLine(line);
     setSearchTerm(line || "");
   };
 
+  const handleReset = () => {
+    setFilter("all");
+    setSearchTerm("");
+    setSelectedLine(null);
+    setSelectedStop(null);
+    setArrivedStop(null);
+    setRouteStart(null);
+    setRouteEnd(null);
+    setPlannedRoute(null);
+    setOnlyLowFloor(false);
+  };
+
   const filteredVehicles = vehicles.filter(
     (v) =>
       (filter === "all" || v.type === filter) &&
       (selectedLine ? v.line === selectedLine : true) &&
-      v.line.toLowerCase().includes(searchTerm.toLowerCase()),
+      v.line.toLowerCase().includes(searchTerm.toLowerCase()) &&
+      (!onlyLowFloor || v.lowFloor),
   );
 
-  const tileUrl = darkMode
-    ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-    : "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
+  useEffect(() => {
+    if (routeStart && routeEnd) {
+      const findLine = () => {
+        for (const vehicle of vehicles) {
+          const routeStops = routes[vehicle.line]?.map(
+            (pos) => stops.find((s) => s.position === pos)?.name,
+          );
+          if (
+            routeStops &&
+            routeStops.includes(routeStart) &&
+            routeStops.includes(routeEnd)
+          ) {
+            return vehicle.line;
+          }
+        }
+        return null;
+      };
+      setPlannedRoute(findLine());
+    } else {
+      setPlannedRoute(null);
+    }
+  }, [routeStart, routeEnd, vehicles, routes, stops]);
 
-  const visibleRoutes = Object.entries(routes).filter(([line]) => {
-    return line === selectedLine;
-  });
-
+  const visibleRoutes = Object.entries(routes).filter(
+    ([line]) => line === selectedLine || line === plannedRoute,
+  );
   return (
     <>
-      <FilterPanel
-        currentFilter={filter}
-        setFilter={setFilter}
-        vehicles={filteredVehicles}
-        searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
-        darkMode={darkMode}
-        setDarkMode={setDarkMode}
-        lines={Object.keys(routes)}
-        selectedLine={selectedLine}
-        onSelectLine={handleSelectLine}
-        stops={stops}
-        onSelectStop={setSelectedStop}
-      />
       <MapContainer className="map-container" center={position} zoom={13}>
         <MapClickHandler onClick={() => handleSelectLine(null)} />
 
@@ -116,15 +156,53 @@ function App() {
           <StopHighlight key={arrivedStop.id} selectedStop={arrivedStop} />
         )}
 
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url={tileUrl}
-        />
-        <LocateButton />
+        <LayersControl position="bottomright">
+          <LayersControl.BaseLayer checked={!darkMode} name="Mapa (Jasna)">
+            <TileLayer
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            />
+          </LayersControl.BaseLayer>
+          <LayersControl.BaseLayer checked={darkMode} name="Mapa (Ciemna)">
+            <TileLayer
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+              url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+            />
+          </LayersControl.BaseLayer>
+          <LayersControl.BaseLayer name="Satelita">
+            <TileLayer
+              attribution="Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community"
+              url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+            />
+          </LayersControl.BaseLayer>
+          <LayersControl.BaseLayer name="Teren">
+            <TileLayer
+              attribution='Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)'
+              url="https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png"
+            />
+          </LayersControl.BaseLayer>
+          <LayersControl.Overlay name="Szyny (OpenRailwayMap)">
+            <TileLayer
+              attribution='Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors | Map style: &copy; <a href="https://www.OpenRailwayMap.org">OpenRailwayMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)'
+              url="https://{s}.tiles.openrailwaymap.org/standard/{z}/{x}/{y}.png"
+              maxZoom={19}
+            />
+          </LayersControl.Overlay>
+        </LayersControl>
 
-        {stops.map((stop) => (
-          <StopMarker key={stop.id} stop={stop} />
-        ))}
+        <ResetViewButton
+          center={position}
+          zoom={13}
+          onReset={handleReset}
+          darkMode={darkMode}
+        />
+        <LocateButton darkMode={darkMode} />
+
+        <MarkerClusterGroup>
+          {stops.map((stop) => (
+            <StopMarker key={stop.id} stop={stop} />
+          ))}
+        </MarkerClusterGroup>
 
         {visibleRoutes.map(([line, positions]) => (
           <Polyline
@@ -149,6 +227,27 @@ function App() {
           />
         ))}
       </MapContainer>
+      <FilterPanel
+        currentFilter={filter}
+        setFilter={setFilter}
+        vehicles={filteredVehicles}
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        darkMode={darkMode}
+        setDarkMode={setDarkMode}
+        lines={Object.keys(routes)}
+        selectedLine={selectedLine}
+        onSelectLine={handleSelectLine}
+        stops={stops}
+        onSelectStop={setSelectedStop}
+        routeStart={routeStart}
+        setRouteStart={setRouteStart}
+        routeEnd={routeEnd}
+        setRouteEnd={setRouteEnd}
+        plannedRoute={plannedRoute}
+        onlyLowFloor={onlyLowFloor}
+        setOnlyLowFloor={setOnlyLowFloor}
+      />
     </>
   );
 }
